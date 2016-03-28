@@ -17,33 +17,44 @@ using namespace std;
 //MAIN FUNCTION
 int main(int argc, char* argv[]){
     
-    MPI_Init(NULL,NULL);
+    MPI_Init(&argc,&argv);
+    
+    if (argc < 2){
+        cerr << "Error. Please input how many times you'd like the number of times you'd like the number to go around the ring."
+        return 1;
+    }
+    
+    int numAroundRing = atoi(argv[1]);
     
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     
-    int number;
-    if (world_rank != 0) {
-        MPI_Recv(&number, 1, MPI_INT, world_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("Process %d received number %d from process %d\n", world_rank, number,
-               world_rank - 1);
-    } else {
-        // Set the number's value if you are process 0
-        number = -1;
-    }
-    MPI_Send(&number, 1, MPI_INT, (world_rank + 1) % world_size, 0,
-             MPI_COMM_WORLD);
-    // Now process 0 can receive from the last process. This makes sure that at
-    // least one MPI_Send is initialized before all MPI_Recvs (again, to prevent
-    // deadlock)
-    if (world_rank == 0) {
-        MPI_Recv(&number, 1, MPI_INT, world_size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("Process %d received number %d from process %d\n", world_rank, number,
-               world_size - 1);
-    }
-    MPI_Finalize();
-}
+    int number = 0;
     
+    double startTime = MPI_Wtime();
+    
+    for (int i = 0; i < numAroundRing; i++) {
+        if (world_rank != 0) {
+            MPI_Recv(&number, 1, MPI_INT, world_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            number += world_rank;
+            //printf("Process %d received number %d from process %d\n", world_rank, number, world_rank - 1);
+        } else if (world_rank == 0) {
+            MPI_Recv(&number, 1, MPI_INT, world_size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            number =+ world_rank;
+        }
+        if (world_rank != world_size - 1) {
+            MPI_Send(&number, 1, MPI_INT, world_rank + 1, 0, MPI_COMM_WORLD);
+        } else if (world_rank == world_size - 1) {
+            MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        }
+    }
+    
+    double endTime = MPI_Wtime();
+    double totalTime = endTime - startTime;
+    
+    cout << "Time to complete with " << numAroundRing << " times around the ring: " << totalTime << "." << endl;
+    
+    MPI_Finalize();
 }
