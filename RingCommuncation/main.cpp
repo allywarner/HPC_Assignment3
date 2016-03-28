@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     MPI_Init(&argc,&argv);
     
     if (argc < 2){
-        cerr << "Error. Please input how many times you'd like the number of times you'd like the number to go around the ring."
+        cerr << "Error. Please input how many times you'd like the number of times you'd like the number to go around the ring.";
         return 1;
     }
     
@@ -36,25 +36,30 @@ int main(int argc, char* argv[]){
     double startTime = MPI_Wtime();
     
     for (int i = 0; i < numAroundRing; i++) {
+        
+        if (world_rank != world_size - 1) {
+            MPI_Send(&number, 1, MPI_INT, world_rank + 1, 0, MPI_COMM_WORLD);
+        } else if (world_rank == world_size - 1) {
+            MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        }
+        
+        
         if (world_rank != 0) {
             MPI_Recv(&number, 1, MPI_INT, world_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             number += world_rank;
             //printf("Process %d received number %d from process %d\n", world_rank, number, world_rank - 1);
         } else if (world_rank == 0) {
             MPI_Recv(&number, 1, MPI_INT, world_size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            number =+ world_rank;
+            number += world_rank;
         }
-        if (world_rank != world_size - 1) {
-            MPI_Send(&number, 1, MPI_INT, world_rank + 1, 0, MPI_COMM_WORLD);
-        } else if (world_rank == world_size - 1) {
-            MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-        }
+        
     }
     
     double endTime = MPI_Wtime();
     double totalTime = endTime - startTime;
-    
-    cout << "Time to complete with " << numAroundRing << " times around the ring: " << totalTime << "." << endl;
+    if(world_rank == 0)
+        printf("Time to complete with %d time(s) around the ring: %f. \n",numAroundRing,totalTime);
+
     
     MPI_Finalize();
 }
