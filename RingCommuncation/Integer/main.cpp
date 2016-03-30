@@ -1,7 +1,7 @@
 //Ally Warner - u0680103
 //Assignment 3
 //High Performance Computing - CS 6230
-//Ring Communication
+//Ring Communication with an integer
 
 #include <iostream>
 #include <stdio.h>
@@ -14,7 +14,7 @@
 using namespace std;
 
 //MAIN FUNCTION
-//Inputs: the numebr of times you'd like to go around the ring
+//Inputs: the number of times you'd like to go around the ring
 int main(int argc, char* argv[]){
     
     //Initialize
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]){
     double endTime = MPI_Wtime();
     double totalTime = endTime - startTime;
     if(world_rank == 0)
-        printf("Time to complete with %d time(s) around the ring: %f. \n",numAroundRing,totalTime);
+        printf("Time to complete with %d time(s) around the ring with %d processors: %f. \n",numAroundRing,world_size,totalTime);
 
     
     MPI_Finalize();

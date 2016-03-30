@@ -1,0 +1,1 @@
+mpicxx main.cpp -o ringComm
