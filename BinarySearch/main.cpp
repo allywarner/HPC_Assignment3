@@ -24,7 +24,7 @@ int compareInt(const void* a, const void* b){
     return 0;
 }
 
-void* parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t numKeys,size_t arrayLength, int (*compar)(const void*,const void*),size_t numThreads,MPI_Comm comm){
+void parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t numKeys,size_t arrayLength, int (*compar)(const void*,const void*),size_t numThreads,MPI_Comm comm){
     
     //Start timer
     double startTime = MPI_Wtime();
@@ -52,6 +52,9 @@ void* parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t num
     
     double endTime = MPI_Wtime();
     double totalTime = endTime - startTime;
+    
+    double globalT=0;
+    MPI_Reduce(&totalTime,&globalT,1,MPI_DOUBLE,MPI_MAX,0,comm);
 }
 
 //MAIN FUNCTION
