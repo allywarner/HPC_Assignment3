@@ -17,7 +17,6 @@ using namespace std;
 
 void* parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t numKeys,size_t arrayLength, int (*compar)(const void*,const void*),size_t numThreads,MPI_Comm comm){
     
-    
     //Start timer
     double startTime = MPI_Wtime();
     
@@ -29,12 +28,12 @@ void* parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t num
     
     int *success = new int[numKeysPerProcess];
     void* item = NULL;
-    void* allKeys = malloc(elementSize*numKeysPerProcess);
+    char* allKeys = new char[elementSize*numKeysPerProcess];
     MPI_Allgather(keys,numKeys*elementSize,MPI_BYTE,allKeys,numKeys*elementSize,MPI_BYTE, comm);
-
+    
 #pragma omp parallel
     for (int i = 0; i < arrayLength; i++) {
-        item = bsearch (allKeys+i*elementSize, arrayBase, arrayLength, elementSize, compar);
+        item = bsearch(allKeys+i*elementSize,arrayBase,arrayLength,elementSize,compar);
         if(item == NULL){
             success[i] = 0;
         } else {
@@ -59,7 +58,7 @@ int main(int argc, char* argv[]){
     //inputs
     int arrayLength = atoi(argv[1]);
     int numKeys = atoi(argv[2]);
-
+    
     //Initialize
     MPI_Init(&argc,&argv);
     int rank,size;
@@ -69,13 +68,17 @@ int main(int argc, char* argv[]){
     //make arrays for inputs
     int *arrayBase = new int[arrayLength];
     int *keys = new int[numKeys];
-
+    
     //Make a random sorted array with values from 0 to 20
-    genNumbers<int>(arrayBase,arrayLength,0,20);
-    std::sort(&arrayBase[0],&arrayBase[arrayLength-1]);
+    for (int i = 0;i < arrayLength; i++){
+        arrayBase[i] = rand() % 20;
+    }
+    sort(&arrayBase[0],&arrayBase[arrayLength-1]);
     
     //Generate random keys to look for between 0 and 20
-    genNumbers<int>(keys,numKeys,0,20);
+    for (int i = 0;i < numKeys; i++){
+        keys[i] = rand() % 20;
+    }
     
     //call search function
     parallelSearch(keys,arrayBase,sizeof(int),numKeys,arrayLength,comparisonOp<int>,4,MPI_COMM_WORLD);
