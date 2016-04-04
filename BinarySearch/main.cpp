@@ -15,6 +15,15 @@
 
 using namespace std;
 
+int compareInt(const void* a, const void* b){
+    //compare function found at:http://www.cplusplus.com/reference/cstdlib/qsort/
+    int da = *(int*)a;
+    int db = *(int*)b;
+    if (da < db) return -1;
+    if (db < da) return 1;
+    return 0;
+}
+
 void* parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t numKeys,size_t arrayLength, int (*compar)(const void*,const void*),size_t numThreads,MPI_Comm comm){
     
     //Start timer
@@ -81,7 +90,7 @@ int main(int argc, char* argv[]){
     }
     
     //call search function
-    parallelSearch(keys,arrayBase,sizeof(int),numKeys,arrayLength,comparisonOp<int>,4,MPI_COMM_WORLD);
+    parallelSearch(keys,arrayBase,sizeof(int),numKeys,arrayLength,compareInt,4,MPI_COMM_WORLD);
     
     MPI_Finalize();
 }
