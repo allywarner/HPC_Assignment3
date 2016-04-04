@@ -10,18 +10,19 @@
 #include <ctime>
 #include <cstring>
 #include <mpi.h>
-#include <omp.h>
+//#include <omp.h>
 #include <algorithm>
 
 using namespace std;
 
-void* parallelSearch((void* keys, void* arrayBase, size_t elementSize, size_t numKeys,size_t arrayLength, int (*compar)(const void*,const void*),size_t numThreads,MPI_Comm comm)){
+void* parallelSearch(void* keys, void* arrayBase, size_t elementSize, size_t numKeys,size_t arrayLength, int (*compar)(const void*,const void*),size_t numThreads,MPI_Comm comm){
     
     
     //Start timer
     double startTime = MPI_Wtime();
     
     //Getting rank and size
+    int rank,size;
     MPI_Comm_rank(comm,&rank);
     MPI_Comm_size(comm,&size);
     unsigned int numKeysPerProcess = size*numKeys;
@@ -30,8 +31,7 @@ void* parallelSearch((void* keys, void* arrayBase, size_t elementSize, size_t nu
     void* item = NULL;
     void* allKeys = malloc(elementSize*numKeysPerProcess);
     MPI_Allgather(keys,numKeys*elementSize,MPI_BYTE,allKeys,numKeys*elementSize,MPI_BYTE, comm);
-    
-    //Open MP binary search with one key
+
 #pragma omp parallel
     for (int i = 0; i < arrayLength; i++) {
         item = bsearch (allKeys+i*elementSize, arrayBase, arrayLength, elementSize, compar);
@@ -75,11 +75,10 @@ int main(int argc, char* argv[]){
     std::sort(&arrayBase[0],&arrayBase[arrayLength-1]);
     
     //Generate random keys to look for between 0 and 20
-    genNumbers<int>(keys,numkeys,0,20);
+    genNumbers<int>(keys,numKeys,0,20);
     
     //call search function
-    parallelSearch(keys,arrayBase,sizeof(int),numKeys,arrayLength,comparisonOp<int>,4,MPI_COMM_WORLD
-                   );
+    parallelSearch(keys,arrayBase,sizeof(int),numKeys,arrayLength,comparisonOp<int>,4,MPI_COMM_WORLD);
     
     MPI_Finalize();
 }
